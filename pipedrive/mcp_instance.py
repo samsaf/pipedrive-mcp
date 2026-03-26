@@ -15,6 +15,9 @@ default_host = "127.0.0.1"
 if os.getenv("CONTAINER_MODE", "false").lower() == "true":
     default_host = "0.0.0.0"
 
+# Detect serverless environment (Vercel, AWS Lambda, etc.)
+is_serverless = os.getenv("VERCEL", "") != "" or os.getenv("AWS_LAMBDA_FUNCTION_NAME", "") != ""
+
 # Create the FastMCP instance
 mcp = FastMCP(
     "mcp-pipedrive",
@@ -22,4 +25,5 @@ mcp = FastMCP(
     lifespan=pipedrive_lifespan,
     host=os.getenv("HOST", default_host),
     port=int(os.getenv("PORT", "8152")),
+    stateless_http=is_serverless,
 )
