@@ -102,7 +102,13 @@ class DealClient:
                 f"DealClient: create_deal payload: {json.dumps(safe_log_payload, indent=2)}"
             )
 
-            response_data = await self.base_client.request("POST", "/deals", json_payload=payload)
+            # Use v1 API when custom fields are present (v2 doesn't support custom fields in body)
+            if custom_fields:
+                response_data = await self.base_client.request(
+                    "POST", "/deals", json_payload=payload, version="v1"
+                )
+            else:
+                response_data = await self.base_client.request("POST", "/deals", json_payload=payload)
             return response_data.get("data", {})
 
         except ValueError as e:
@@ -273,9 +279,15 @@ class DealClient:
                 f"DealClient: update_deal payload for ID {deal_id}: {json.dumps(safe_log_payload, indent=2)}"
             )
 
-            response_data = await self.base_client.request(
-                "PATCH", f"/deals/{deal_id}", json_payload=payload
-            )
+            # Use v1 API when custom fields are present (v2 doesn't support custom fields in body)
+            if custom_fields:
+                response_data = await self.base_client.request(
+                    "PUT", f"/deals/{deal_id}", json_payload=payload, version="v1"
+                )
+            else:
+                response_data = await self.base_client.request(
+                    "PATCH", f"/deals/{deal_id}", json_payload=payload
+                )
             return response_data.get("data", {})
 
         except ValueError as e:

@@ -68,7 +68,13 @@ class OrganizationClient:
         logger.debug(
             f"OrganizationClient: create_organization payload: {json.dumps(payload, indent=2)}"
         )
-        response_data = await self.base_client.request("POST", "/organizations", json_payload=payload)
+        # Use v1 API when custom fields are present (v2 doesn't support custom fields in body)
+        if custom_fields:
+            response_data = await self.base_client.request(
+                "POST", "/organizations", json_payload=payload, version="v1"
+            )
+        else:
+            response_data = await self.base_client.request("POST", "/organizations", json_payload=payload)
         return response_data.get("data", {})
     
     async def get_organization(
@@ -166,9 +172,15 @@ class OrganizationClient:
         logger.debug(
             f"OrganizationClient: update_organization payload for ID {organization_id}: {json.dumps(payload, indent=2)}"
         )
-        response_data = await self.base_client.request(
-            "PATCH", f"/organizations/{organization_id}", json_payload=payload
-        )
+        # Use v1 API when custom fields are present (v2 doesn't support custom fields in body)
+        if custom_fields:
+            response_data = await self.base_client.request(
+                "PUT", f"/organizations/{organization_id}", json_payload=payload, version="v1"
+            )
+        else:
+            response_data = await self.base_client.request(
+                "PATCH", f"/organizations/{organization_id}", json_payload=payload
+            )
         return response_data.get("data", {})
     
     async def delete_organization(self, organization_id: int) -> Dict[str, Any]:

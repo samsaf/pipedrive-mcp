@@ -104,7 +104,13 @@ class PersonClient:
         logger.debug(
             f"PersonClient: create_person payload: {json.dumps(payload, indent=2)}"
         )
-        response_data = await self.base_client.request("POST", "/persons", json_payload=payload)
+        # Use v1 API when custom fields are present (v2 doesn't support custom fields in body)
+        if custom_fields:
+            response_data = await self.base_client.request(
+                "POST", "/persons", json_payload=payload, version="v1"
+            )
+        else:
+            response_data = await self.base_client.request("POST", "/persons", json_payload=payload)
         return response_data.get("data", {})
     
     async def get_person(
@@ -249,9 +255,15 @@ class PersonClient:
         logger.debug(
             f"PersonClient: update_person payload for ID {person_id}: {json.dumps(payload, indent=2)}"
         )
-        response_data = await self.base_client.request(
-            "PATCH", f"/persons/{person_id}", json_payload=payload
-        )
+        # Use v1 API when custom fields are present (v2 doesn't support custom fields in body)
+        if custom_fields:
+            response_data = await self.base_client.request(
+                "PUT", f"/persons/{person_id}", json_payload=payload, version="v1"
+            )
+        else:
+            response_data = await self.base_client.request(
+                "PATCH", f"/persons/{person_id}", json_payload=payload
+            )
         return response_data.get("data", {})
     
     async def delete_person(self, person_id: int) -> Dict[str, Any]:
