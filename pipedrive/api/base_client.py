@@ -93,7 +93,8 @@ class BaseClient:
 
         logger.debug(f"BaseClient Request: {method} {url}")
         if params_to_send:
-            logger.debug(f"URL Params: {params_to_send}")
+            safe_params = {k: "***REDACTED***" if k == "api_token" else v for k, v in params_to_send.items()}
+            logger.debug(f"URL Params: {safe_params}")
         if json_payload:
             logger.debug(
                 f"JSON Payload: {json.dumps(json_payload, indent=2)}"
