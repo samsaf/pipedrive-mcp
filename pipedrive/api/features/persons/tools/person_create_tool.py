@@ -120,15 +120,21 @@ async def create_person_in_pipedrive(
         return format_tool_response(False, error_message=error_msg)
 
     # Parse custom fields if provided
+    # Note: MCP framework may auto-parse JSON strings into dicts, so we accept both
     custom_fields = None
     if custom_fields_str:
-        try:
-            import json
-            custom_fields = json.loads(custom_fields_str)
-            if not isinstance(custom_fields, dict):
-                raise ValueError("Custom fields must be a JSON object")
-        except Exception as e:
-            error_msg = f"Invalid custom_fields_str format: {str(e)}"
+        if isinstance(custom_fields_str, dict):
+            custom_fields = custom_fields_str
+        else:
+            try:
+                import json
+                custom_fields = json.loads(custom_fields_str)
+            except Exception as e:
+                error_msg = f"Invalid custom_fields_str format: {str(e)}"
+                logger.error(error_msg)
+                return format_tool_response(False, error_message=error_msg)
+        if not isinstance(custom_fields, dict):
+            error_msg = "Custom fields must be a JSON object"
             logger.error(error_msg)
             return format_tool_response(False, error_message=error_msg)
 
