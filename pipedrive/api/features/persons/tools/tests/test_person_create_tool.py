@@ -70,12 +70,11 @@ class TestCreatePersonTool:
         mock_ctx.request_context.lifespan_context.pipedrive_client = mock_pipedrive_client
         
         # Call the tool function with custom fields
-        custom_fields_str = '{"customer_type": "Premium", "lead_source": "Website"}'
         result = await create_person_in_pipedrive(
             ctx=mock_ctx,
             name="Test Person",
             email_address="test@example.com",
-            custom_fields_str=custom_fields_str
+            custom_fields={"customer_type": "Premium", "lead_source": "Website"}
         )
         
         # Parse the JSON result
@@ -160,31 +159,6 @@ class TestCreatePersonTool:
         assert result_data["success"] is False
         assert "error" in result_data
         assert "Invalid visible_to value" in result_data["error"]
-        
-        # Verify the client was not called
-        mock_pipedrive_client.persons.create_person.assert_not_called()
-    
-    @pytest.mark.asyncio
-    async def test_create_person_invalid_custom_fields_json(self, mock_pipedrive_client):
-        """Test error handling with invalid custom fields JSON"""
-        # Mock the context and lifespan context
-        mock_ctx = MagicMock(spec=Context)
-        mock_ctx.request_context.lifespan_context.pipedrive_client = mock_pipedrive_client
-        
-        # Call the tool function with invalid custom fields JSON
-        result = await create_person_in_pipedrive(
-            ctx=mock_ctx,
-            name="Test Person",
-            custom_fields_str="invalid json"
-        )
-        
-        # Parse the JSON result
-        result_data = json.loads(result)
-        
-        # Verify error response
-        assert result_data["success"] is False
-        assert "error" in result_data
-        assert "Invalid custom_fields_str format" in result_data["error"]
         
         # Verify the client was not called
         mock_pipedrive_client.persons.create_person.assert_not_called()

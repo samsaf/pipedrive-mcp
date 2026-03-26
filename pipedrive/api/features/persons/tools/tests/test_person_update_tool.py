@@ -75,12 +75,11 @@ class TestUpdatePersonTool:
         mock_ctx.request_context.lifespan_context.pipedrive_client = mock_pipedrive_client
         
         # Call the tool function with custom fields
-        custom_fields_str = '{"customer_type": "Premium", "lead_source": "Website"}'
         result = await update_person_in_pipedrive(
             ctx=mock_ctx,
             id_str="123",
             name="Updated Person",
-            custom_fields_str=custom_fields_str
+            custom_fields={"customer_type": "Premium", "lead_source": "Website"}
         )
         
         # Parse the JSON result

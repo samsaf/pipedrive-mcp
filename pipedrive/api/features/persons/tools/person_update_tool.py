@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import Context
 from pydantic import ValidationError
@@ -25,7 +25,7 @@ async def update_person_in_pipedrive(
     phone_number: Optional[str] = None,
     phone_label: str = "work",
     visible_to_str: Optional[str] = None,
-    custom_fields_str: Optional[str] = None,
+    custom_fields: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Updates an existing person in the Pipedrive CRM.
 
@@ -49,7 +49,7 @@ async def update_person_in_pipedrive(
           "1" = Owner only
           "2" = Owner's visibility group
           "3" = Entire company
-        - custom_fields_str: JSON string of custom fields (optional)
+        - custom_fields: Dictionary of custom field keys and values (optional)
 
     Example:
         update_person_in_pipedrive(
@@ -70,7 +70,7 @@ async def update_person_in_pipedrive(
         phone_number: Updated primary phone number (replaces current phone)
         phone_label: Label for the phone (default: "work")
         visible_to_str: Updated visibility setting (1=Owner only, 2=Owner's group, 3=Entire company)
-        custom_fields_str: JSON string of custom fields to update
+        custom_fields: Dictionary of custom field keys and values to update (e.g. {"cf8d3660...": 1})
 
     Returns:
         JSON string containing success status and updated person data or error message.
@@ -80,7 +80,7 @@ async def update_person_in_pipedrive(
         f"id_str='{id_str}', name='{name}', owner_id_str='{owner_id_str}', "
         f"org_id_str='{org_id_str}', email_address='{email_address}', "
         f"phone_number='{phone_number}', visible_to_str='{visible_to_str}', "
-        f"custom_fields_str='{custom_fields_str}'"
+        f"custom_fields={custom_fields}"
     )
 
     pd_mcp_ctx: PipedriveMCPContext = ctx.request_context.lifespan_context
@@ -93,7 +93,7 @@ async def update_person_in_pipedrive(
 
     # Verify that at least one update field is provided
     if all(param is None for param in [
-        name, owner_id_str, org_id_str, email_address, phone_number, visible_to_str, custom_fields_str
+        name, owner_id_str, org_id_str, email_address, phone_number, visible_to_str, custom_fields
     ]):
         error_msg = "At least one field must be provided to update a person"
         logger.error(error_msg)
@@ -137,25 +137,6 @@ async def update_person_in_pipedrive(
         )
         logger.error(error_msg)
         return format_tool_response(False, error_message=error_msg)
-
-    # Parse custom fields if provided
-    # Note: MCP framework may auto-parse JSON strings into dicts, so we accept both
-    custom_fields = None
-    if custom_fields_str:
-        if isinstance(custom_fields_str, dict):
-            custom_fields = custom_fields_str
-        else:
-            try:
-                import json
-                custom_fields = json.loads(custom_fields_str)
-            except Exception as e:
-                error_msg = f"Invalid custom_fields_str format: {str(e)}"
-                logger.error(error_msg)
-                return format_tool_response(False, error_message=error_msg)
-        if not isinstance(custom_fields, dict):
-            error_msg = "Custom fields must be a JSON object"
-            logger.error(error_msg)
-            return format_tool_response(False, error_message=error_msg)
 
     try:
         # Build an update payload

@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import Context
 from pydantic import ValidationError
@@ -24,7 +24,7 @@ async def create_person_in_pipedrive(
     phone_number: Optional[str] = None,
     phone_label: str = "work",
     visible_to_str: Optional[str] = None,
-    custom_fields_str: Optional[str] = None,
+    custom_fields: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Creates a new person entity within the Pipedrive CRM.
 
@@ -44,7 +44,7 @@ async def create_person_in_pipedrive(
           "1" = Owner only
           "2" = Owner's visibility group
           "3" = Entire company
-        - custom_fields_str: JSON string of custom fields (optional)
+        - custom_fields: Dictionary of custom field keys and values (optional)
 
     Example:
         create_person_in_pipedrive(
@@ -65,7 +65,7 @@ async def create_person_in_pipedrive(
         phone_number: Primary phone number for this person
         phone_label: Label for the phone number (default: "work")
         visible_to_str: Visibility setting as string (1=Owner only, 2=Owner's group, 3=Entire company)
-        custom_fields_str: JSON string of custom fields to set
+        custom_fields: Dictionary of custom field keys and values to set (e.g. {"cf8d3660...": 1})
 
     Returns:
         JSON string containing success status and created person data or error message.
@@ -75,7 +75,7 @@ async def create_person_in_pipedrive(
         f"name='{name}', owner_id_str={owner_id_str}, org_id_str={org_id_str}, "
         f"email_address={email_address}, email_label={email_label}, "
         f"phone_number={phone_number}, phone_label={phone_label}, "
-        f"visible_to_str={visible_to_str}, custom_fields_str={custom_fields_str}"
+        f"visible_to_str={visible_to_str}, custom_fields={custom_fields}"
     )
 
     # Validate required fields
@@ -90,7 +90,6 @@ async def create_person_in_pipedrive(
     email_address = None if email_address == "" else email_address
     phone_number = None if phone_number == "" else phone_number
     visible_to_str = None if visible_to_str == "" else visible_to_str
-    custom_fields_str = None if custom_fields_str == "" else custom_fields_str
 
     pd_mcp_ctx: PipedriveMCPContext = ctx.request_context.lifespan_context
 
@@ -118,25 +117,6 @@ async def create_person_in_pipedrive(
         )
         logger.error(error_msg)
         return format_tool_response(False, error_message=error_msg)
-
-    # Parse custom fields if provided
-    # Note: MCP framework may auto-parse JSON strings into dicts, so we accept both
-    custom_fields = None
-    if custom_fields_str:
-        if isinstance(custom_fields_str, dict):
-            custom_fields = custom_fields_str
-        else:
-            try:
-                import json
-                custom_fields = json.loads(custom_fields_str)
-            except Exception as e:
-                error_msg = f"Invalid custom_fields_str format: {str(e)}"
-                logger.error(error_msg)
-                return format_tool_response(False, error_message=error_msg)
-        if not isinstance(custom_fields, dict):
-            error_msg = "Custom fields must be a JSON object"
-            logger.error(error_msg)
-            return format_tool_response(False, error_message=error_msg)
 
     try:
         # Create Person model instance with validation
