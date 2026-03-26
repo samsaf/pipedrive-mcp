@@ -85,8 +85,7 @@ class TestCreatePersonTool:
         
         # Verify the client was called with correct custom fields
         call_kwargs = mock_pipedrive_client.persons.create_person.call_args.kwargs
-        assert call_kwargs["customer_type"] == "Premium"
-        assert call_kwargs["lead_source"] == "Website"
+        assert call_kwargs["custom_fields"] == {"customer_type": "Premium", "lead_source": "Website"}
     
     @pytest.mark.asyncio
     async def test_create_person_invalid_id(self, mock_pipedrive_client):

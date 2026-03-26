@@ -140,14 +140,11 @@ async def create_person_in_pipedrive(
         # Convert model to API-compatible dict
         payload = person.to_api_dict()
 
-        # Add custom fields if provided
-        if custom_fields:
-            payload.update(custom_fields)
-
-        logger.debug(f"Prepared payload for person creation: {payload}")
+        logger.debug(f"Prepared payload for person creation: {payload}, custom_fields: {custom_fields}")
 
         # Call the Pipedrive API using the persons client
         created_person = await pd_mcp_ctx.pipedrive_client.persons.create_person(
+            custom_fields=custom_fields,
             **payload
         )
 

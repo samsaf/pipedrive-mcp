@@ -191,15 +191,12 @@ async def update_person_in_pipedrive(
                 )
                 update_data["phones"] = [phone.to_dict()]
         
-        # Add custom fields if provided
-        if custom_fields:
-            update_data.update(custom_fields)
-        
-        logger.debug(f"Prepared payload for person update: {update_data}")
-        
+        logger.debug(f"Prepared payload for person update: {update_data}, custom_fields: {custom_fields}")
+
         # Call the Pipedrive API using the persons client
         updated_person = await pd_mcp_ctx.pipedrive_client.persons.update_person(
             person_id=person_id,
+            custom_fields=custom_fields,
             **update_data
         )
         
