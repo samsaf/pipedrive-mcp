@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from mcp.server.fastmcp import Context
 from pydantic import ValidationError
@@ -29,6 +29,7 @@ async def update_deal_in_pipedrive(
     visible_to_str: Optional[str] = None,
     probability: Optional[str] = None,
     lost_reason: Optional[str] = None,
+    custom_fields: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Updates an existing deal in the Pipedrive CRM.
 
@@ -81,6 +82,7 @@ async def update_deal_in_pipedrive(
     visible_to_str: Optional[str] = None - Visibility setting (0=private, 1=shared, 3=team, 7=company)
     probability: Optional[str] = None - Deal success probability percentage (0-100)
     lost_reason: Optional[str] = None - Reason for losing the deal (only if status is 'lost')
+    custom_fields: Optional[Dict[str, Any]] = None - Dictionary of custom field keys and values to update (e.g. {"cf8d3660...": 1})
     """
     logger.debug(
         f"Tool 'update_deal_in_pipedrive' ENTERED with raw args: "
@@ -205,7 +207,7 @@ async def update_deal_in_pipedrive(
     if all(param is None for param in [
         title, value_float, currency, person_id, org_id, status,
         owner_id, stage_id, pipeline_id, expected_close_date,
-        visible_to, probability_int, lost_reason
+        visible_to, probability_int, lost_reason, custom_fields
     ]):
         error_message = "At least one field must be provided for updating a deal"
         logger.error(error_message)
@@ -254,7 +256,8 @@ async def update_deal_in_pipedrive(
             pipeline_id=pipeline_id,
             visible_to=visible_to,
             probability=probability_int,
-            lost_reason=lost_reason
+            lost_reason=lost_reason,
+            custom_fields=custom_fields
         )
 
         logger.info(f"Successfully updated deal with ID: {deal_id}")

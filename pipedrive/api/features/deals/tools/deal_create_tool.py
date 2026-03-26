@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from mcp.server.fastmcp import Context
 from pydantic import ValidationError
@@ -27,7 +27,8 @@ async def create_deal_in_pipedrive(
     expected_close_date: Optional[str] = None,
     visible_to_str: Optional[str] = None,
     probability: Optional[str] = None,
-    lost_reason: Optional[str] = None
+    lost_reason: Optional[str] = None,
+    custom_fields: Optional[Dict[str, Any]] = None,
 ):
     """Creates a new deal in Pipedrive CRM.
 
@@ -75,6 +76,7 @@ async def create_deal_in_pipedrive(
     visible_to_str: Optional[str] = None - Visibility setting (0=private, 1=shared, 3=team, 7=company)
     probability: Optional[str] = None - Deal success probability percentage (0-100)
     lost_reason: Optional[str] = None - Reason for losing the deal (only if status is 'lost')
+    custom_fields: Optional[Dict[str, Any]] = None - Dictionary of custom field keys and values (e.g. {"cf8d3660...": 1})
     """
     # Log inputs with appropriate redaction of sensitive data
     logger.debug(
@@ -227,16 +229,19 @@ async def create_deal_in_pipedrive(
         
         # Convert model to API-compatible dict
         payload = deal.to_api_dict()
-        
+
         # Log the payload with sensitive information redacted
         safe_log_payload = payload.copy()
         if "value" in safe_log_payload:
             safe_log_payload["value"] = "[REDACTED]"
-            
+
         logger.debug(f"Prepared payload for deal creation: {safe_log_payload}")
-        
+
         # Call the Pipedrive API using the deals client
-        created_deal = await pd_mcp_ctx.pipedrive_client.deals.create_deal(**payload)
+        created_deal = await pd_mcp_ctx.pipedrive_client.deals.create_deal(
+            **payload,
+            custom_fields=custom_fields
+        )
         
         logger.info(
             f"Successfully created deal '{title}' with ID: {created_deal.get('id')}"
