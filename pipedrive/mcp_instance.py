@@ -19,6 +19,8 @@ if os.getenv("CONTAINER_MODE", "false").lower() == "true":
 is_serverless = os.getenv("VERCEL", "") != "" or os.getenv("AWS_LAMBDA_FUNCTION_NAME", "") != ""
 
 # Create the FastMCP instance
+# streamable_http_path="/" avoids Starlette Mount 307 redirect from /mcp to /mcp/
+# Our wrapper in app.py handles the /health route separately
 mcp = FastMCP(
     "mcp-pipedrive",
     description="MCP server for Pipedrive API v2",
@@ -26,4 +28,5 @@ mcp = FastMCP(
     host=os.getenv("HOST", default_host),
     port=int(os.getenv("PORT", "8152")),
     stateless_http=is_serverless,
+    streamable_http_path="/",
 )
