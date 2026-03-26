@@ -18,10 +18,5 @@
       "src": "/(.*)",
       "dest": "api/mcp.py"
     }
-  ],
-  "env": {
-    "PIPEDRIVE_API_TOKEN": "@pipedrive-api-token",
-    "PIPEDRIVE_COMPANY_DOMAIN": "@pipedrive-company-domain",
-    "MCP_AUTH_TOKEN": "@mcp-auth-token"
-  }
+  ]
 }
