@@ -11,6 +11,7 @@ from pipedrive.api.features import discover_features
 from pipedrive.feature_config import FeatureConfig
 from pipedrive.api.pipedrive_context import pipedrive_lifespan
 from pipedrive.mcp_instance import mcp
+from pipedrive.app import wrap_app_with_middleware, log_auth_status
 
 load_dotenv()
 
@@ -20,34 +21,67 @@ discover_features()
 # Load feature configuration
 feature_config = FeatureConfig()
 
+
 async def main():
     transport = os.getenv("TRANSPORT", "sse")
     server_host = os.getenv("HOST", "0.0.0.0")
     server_port = int(os.getenv("PORT", "8152"))
-    
+
     # Log enabled features
     enabled_features = feature_config.get_enabled_features()
     logger.info(f"Enabled features: {', '.join(enabled_features.keys())}")
-    
+
     # Log registered tools
     tool_count = registry.get_tool_count()
     logger.info(f"Registered tools: {tool_count}")
-    
+
+    # Log auth status
+    log_auth_status()
+
     logger.info(
         f"Starting Pipedrive MCP server. Transport: {transport}, Host: {server_host}, Port: {server_port}"
     )
-    
+
     if transport == "sse":
-        await mcp.run_sse_async()
+        import uvicorn
+
+        starlette_app = mcp.sse_app()
+        app = wrap_app_with_middleware(starlette_app)
+
+        config = uvicorn.Config(
+            app,
+            host=server_host,
+            port=server_port,
+            log_level="info",
+        )
+        server = uvicorn.Server(config)
+        await server.serve()
+
+    elif transport == "streamable-http":
+        import uvicorn
+
+        starlette_app = mcp.streamable_http_app()
+        app = wrap_app_with_middleware(starlette_app)
+
+        config = uvicorn.Config(
+            app,
+            host=server_host,
+            port=server_port,
+            log_level="info",
+        )
+        server = uvicorn.Server(config)
+        await server.serve()
+
     else:
+        # stdio transport - no HTTP middleware needed
         logger.info(
-            "Stdio transport selected. Ensure your FastMCP setup supports this or modify."
+            "Stdio transport selected. Middleware (auth, CORS) not applicable."
         )
         if hasattr(mcp, "run_stdio_async"):
             await mcp.run_stdio_async()
         else:
             logger.warning(
-                "run_stdio_async method not found on mcp object. Defaulting to SSE behavior for this example if stdio is chosen."
+                "run_stdio_async method not found. Falling back to SSE."
             )
             await mcp.run_sse_async()
 

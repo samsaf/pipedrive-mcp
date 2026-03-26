@@ -15,6 +15,7 @@ RUN uv venv .venv && \
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH"
 ENV CONTAINER_MODE="true"
+ENV HOST="0.0.0.0"
 
 EXPOSE ${PORT}
 

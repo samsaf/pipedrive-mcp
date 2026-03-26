@@ -1,0 +1,27 @@
+{
+  "builds": [
+    {
+      "src": "api/mcp.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/health",
+      "dest": "api/mcp.py"
+    },
+    {
+      "src": "/mcp(.*)",
+      "dest": "api/mcp.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "api/mcp.py"
+    }
+  ],
+  "env": {
+    "PIPEDRIVE_API_TOKEN": "@pipedrive-api-token",
+    "PIPEDRIVE_COMPANY_DOMAIN": "@pipedrive-company-domain",
+    "MCP_AUTH_TOKEN": "@mcp-auth-token"
+  }
+}

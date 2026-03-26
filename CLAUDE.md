@@ -24,8 +24,12 @@ The mcp-concept project is a Model Control Protocol (MCP) server implementation 
    PIPEDRIVE_COMPANY_DOMAIN=your_company_domain
    HOST=0.0.0.0  # Optional, defaults to 0.0.0.0
    PORT=8152     # Optional, defaults to 8152
-   TRANSPORT=sse  # or "stdio", defaults to "stdio"
-   
+   TRANSPORT=sse  # Options: stdio, sse, streamable-http
+
+   # Security (optional)
+   MCP_AUTH_TOKEN=           # Bearer token for remote auth (leave empty for local dev)
+   ALLOWED_ORIGINS=*         # CORS origins
+
    # Feature flags (optional)
    PIPEDRIVE_FEATURE_PERSONS=true
    PIPEDRIVE_FEATURE_DEALS=true
@@ -113,6 +117,11 @@ pipedrive/
 │   │   ├── item_search/                     (Item search feature module)
 │   │   └── shared/                          (Shared utilities across features)
 │   └── tests/                               (Tests for core API components)
+├── middleware/
+│   ├── auth.py                              (Bearer token authentication middleware)
+│   ├── cors.py                              (CORS middleware)
+│   └── tests/                               (Middleware tests)
+├── app.py                                   (App builder: middleware + health check composition)
 ├── mcp_instance.py                          (MCP server instance configuration)
 └── feature_config.py                        (Feature configuration management)
 ```
@@ -143,14 +152,23 @@ pipedrive/
 
 10. **Pipedrive Context:** (`pipedrive/api/pipedrive_context.py`) Manages the lifecycle of the Pipedrive client.
 
+11. **Auth Middleware:** (`pipedrive/middleware/auth.py`) Bearer token authentication. Configured via `MCP_AUTH_TOKEN` env var.
+
+12. **CORS Middleware:** (`pipedrive/middleware/cors.py`) Cross-origin headers for claude.ai. Configured via `ALLOWED_ORIGINS` env var.
+
+13. **App Builder:** (`pipedrive/app.py`) Composes the MCP Starlette app with middleware and health check route.
+
 ### Data Flow
 
-1. Claude calls an MCP tool function
-2. The tool decorator checks if the feature is enabled
-3. The tool function accesses the Pipedrive client via context
-4. The client delegates to the appropriate feature-specific client
-5. The feature client makes an API request to Pipedrive
-6. Results are processed and returned to Claude in a standardized format
+1. HTTP request arrives (SSE or Streamable HTTP)
+2. CORS middleware adds cross-origin headers
+3. Auth middleware verifies Bearer token (if `MCP_AUTH_TOKEN` is set)
+4. Claude calls an MCP tool function
+5. The tool decorator checks if the feature is enabled
+6. The tool function accesses the Pipedrive client via context
+7. The client delegates to the appropriate feature-specific client
+8. The feature client makes an API request to Pipedrive
+9. Results are processed and returned to Claude in a standardized format
 
 ### Key Features
 

@@ -19,6 +19,10 @@ Additional features:
 - Feature flags to enable/disable specific modules
 - Vertical slice architecture for maintainability
 - Comprehensive test coverage
+- **Remote deployment** support (Vercel, Docker, VPS)
+- **Bearer token authentication** for secure remote access
+- **CORS support** for Claude.ai Custom Connectors
+- **Streamable HTTP transport** for serverless environments
 
 ## Quick Start with Claude Code
 
@@ -182,11 +186,14 @@ The project follows a vertical slice architecture with each feature having its o
 This MCP server implements several security measures:
 
 - Default binding to localhost (127.0.0.1) when running locally
+- Bearer token authentication for remote deployments (`MCP_AUTH_TOKEN`)
+- CORS headers for controlled cross-origin access
 - Proper error handling and logging
 
 When deploying:
 - For local development, keep the default host (127.0.0.1)
 - For container deployment, set `CONTAINER_MODE=true`
+- For remote deployment, always set `MCP_AUTH_TOKEN` to secure the server
 
 ### Clone the Repository
 
@@ -207,21 +214,23 @@ source .venv/bin/activate  # On Unix/macOS
 uv pip install -e .
 ```
 
-2. Create a `.env` file in the root directory:
+2. Create a `.env` file in the root directory (copy from `.env.example`):
 
 ```
 # API Credentials
 PIPEDRIVE_API_TOKEN=your_api_token
-PIPEDRIVE_COMPANY_DOMAIN=your_company_domain  # Just the subdomain portion (e.g., "mycompany" from mycompany.pipedrive.com)
+PIPEDRIVE_COMPANY_DOMAIN=your_company_domain  # Just the subdomain (e.g., "mycompany")
 
 # Server Configuration
 HOST=127.0.0.1  # Use 127.0.0.1 for local development, 0.0.0.0 only in containers
 PORT=8152
-TRANSPORT=sse   # "sse" or "stdio"
+TRANSPORT=sse   # "sse", "stdio", or "streamable-http"
 
 # Security Settings
+MCP_AUTH_TOKEN=          # Leave empty for local dev, set for remote deployments
+ALLOWED_ORIGINS=*        # CORS origins (comma-separated, or * for all)
 CONTAINER_MODE=false
-VERIFY_SSL=true  # Set to "false" if you encounter SSL certificate issues (development only)
+VERIFY_SSL=true
 
 # Feature Flags (optional)
 PIPEDRIVE_FEATURE_PERSONS=true
@@ -250,57 +259,96 @@ mcp install server.py
 uv run server.py
 ```
 
-### Using Docker
-
-1. Build the Docker image:
+### Using Docker (Local)
 
 ```bash
 docker build -t pipedrive-mcp .
-```
 
-2. Run the container with environment variables:
-
-```bash
-# IMPORTANT: Replace values in quotes with your real Pipedrive credentials
 docker run -d -p 8152:8152 \
-  -e PIPEDRIVE_API_TOKEN="your-actual-pipedrive-api-token" \
-  -e PIPEDRIVE_COMPANY_DOMAIN="your-company-subdomain" \
-  -e PORT=8152 \
+  -e PIPEDRIVE_API_TOKEN="your-api-token" \
+  -e PIPEDRIVE_COMPANY_DOMAIN="mycompany" \
   -e TRANSPORT=sse \
-  -e CONTAINER_MODE=true \
-  -e VERIFY_SSL=true \
   --name pipedrive-mcp-server \
   pipedrive-mcp
 ```
 
-For example, if your Pipedrive domain is `mycompany.pipedrive.com`, you would use:
-```
--e PIPEDRIVE_COMPANY_DOMAIN="mycompany"
-```
-
-3. Check the container is running and view logs:
+Or with docker-compose:
 
 ```bash
-# Check container status
-docker ps | grep pipedrive-mcp-server
-
-# View logs
-docker logs pipedrive-mcp-server
+# Set your env vars in .env then:
+docker compose up -d
 ```
 
-4. Stop and remove the container when done:
+## Remote Deployment
+
+### Option A — Vercel (recommended for serverless)
+
+1. Fork this repo
+2. Connect it to Vercel
+3. Configure the environment variables in the Vercel dashboard:
+   - `PIPEDRIVE_API_TOKEN` — your Pipedrive API token
+   - `PIPEDRIVE_COMPANY_DOMAIN` — your company subdomain (e.g., `mycompany`)
+   - `MCP_AUTH_TOKEN` — generate with `openssl rand -hex 32`
+4. Deploy
+5. Your MCP server URL: `https://your-project.vercel.app/mcp`
+
+The Vercel deployment uses the **Streamable HTTP** transport, which is ideal for serverless environments.
+
+### Option B — Docker (VPS / Cloud)
 
 ```bash
-docker stop pipedrive-mcp-server
-docker rm pipedrive-mcp-server
+docker run -d -p 8152:8152 \
+  -e PIPEDRIVE_API_TOKEN="your-api-token" \
+  -e PIPEDRIVE_COMPANY_DOMAIN="mycompany" \
+  -e MCP_AUTH_TOKEN="your-secret-token" \
+  -e TRANSPORT=sse \
+  pipedrive-mcp
 ```
 
-5. Configure Claude to use the MCP server:
+### Health Check
 
-To use this server with Claude Desktop, register the MCP server in Claude desktop settings:
-- Server Name: Pipedrive MCP
-- Endpoint URL: http://localhost:8152
-- Auth: None
+All deployments expose a `GET /health` endpoint (no auth required):
+
+```bash
+curl https://your-server/health
+# {"status": "ok", "version": "1.0.0", "features": ["persons", "deals", ...]}
+```
+
+## Client Configuration
+
+### Claude Desktop (claude_desktop_config.json)
+
+For remote servers:
+
+```json
+{
+  "mcpServers": {
+    "pipedrive": {
+      "url": "https://your-project.vercel.app/mcp",
+      "headers": {
+        "Authorization": "Bearer your-secret-token"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+```bash
+claude mcp add pipedrive \
+  --transport http \
+  https://your-project.vercel.app/mcp \
+  -H "Authorization: Bearer your-secret-token"
+```
+
+### Claude.ai (Custom Connector)
+
+```
+URL: https://your-project.vercel.app/mcp
+```
+
+> Note: Custom Connectors on claude.ai may not support custom auth headers yet. For claude.ai, consider an OAuth-based approach or a token-in-URL mechanism.
 
 ## Project Structure
 
