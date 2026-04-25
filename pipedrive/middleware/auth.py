@@ -23,14 +23,18 @@ class BearerAuthMiddleware(BaseHTTPMiddleware):
     """
 
     EXCLUDED_PATHS = {"/health", "/api/health"}
+    # Prefixes always allowed without auth so OAuth-discovery clients (e.g. claude.ai
+    # Custom Connector) get a clean 404 from the underlying app instead of a misleading 401.
+    EXCLUDED_PREFIXES = ("/.well-known/", "/register")
 
     async def dispatch(self, request: Request, call_next):
         # Always allow preflight OPTIONS requests
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # Skip auth for health check
-        if request.url.path in self.EXCLUDED_PATHS:
+        # Skip auth for health check and OAuth discovery endpoints
+        path = request.url.path
+        if path in self.EXCLUDED_PATHS or path.startswith(self.EXCLUDED_PREFIXES):
             return await call_next(request)
 
         expected_token = get_auth_token()
