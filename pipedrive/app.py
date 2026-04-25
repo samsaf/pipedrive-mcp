@@ -31,6 +31,34 @@ async def health_check(request: Request) -> JSONResponse:
     })
 
 
+def _mask(value: str) -> str:
+    """Mask a secret, showing only first 4 and last 4 chars + length."""
+    if not value:
+        return "<empty>"
+    if len(value) <= 8:
+        return f"<too short: {len(value)} chars>"
+    return f"{value[:4]}...{value[-4:]} (len={len(value)})"
+
+
+async def debug_env(request: Request) -> JSONResponse:
+    """TEMPORARY debug endpoint to inspect what env vars the server actually sees.
+
+    Reveals only first/last 4 chars of secrets to avoid full leak. Remove this
+    endpoint after debugging is complete.
+    """
+    api_token = os.getenv("PIPEDRIVE_API_TOKEN", "")
+    domain = os.getenv("PIPEDRIVE_COMPANY_DOMAIN", "")
+    auth_token = os.getenv("MCP_AUTH_TOKEN", "")
+
+    return JSONResponse({
+        "PIPEDRIVE_API_TOKEN": _mask(api_token),
+        "PIPEDRIVE_COMPANY_DOMAIN": domain,  # not a secret
+        "MCP_AUTH_TOKEN": _mask(auth_token),
+        "api_token_has_whitespace": api_token != api_token.strip() if api_token else False,
+        "domain_has_whitespace": domain != domain.strip() if domain else False,
+    })
+
+
 def wrap_app_with_middleware(app: Starlette, include_health: bool = True) -> Starlette:
     """Wrap an existing Starlette app with auth, CORS middleware and health route.
 
@@ -48,6 +76,8 @@ def wrap_app_with_middleware(app: Starlette, include_health: bool = True) -> Sta
 
     if include_health:
         routes.append(Route("/health", health_check, methods=["GET"]))
+        # TEMPORARY debug endpoint - remove after debugging
+        routes.append(Route("/debug-env", debug_env, methods=["GET"]))
 
     # Mount the original MCP app to handle all other routes
     routes.append(Mount("/", app=app))
