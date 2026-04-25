@@ -22,7 +22,7 @@ class BearerAuthMiddleware(BaseHTTPMiddleware):
     Health check endpoint is always accessible without authentication.
     """
 
-    EXCLUDED_PATHS = {"/health", "/api/health", "/debug-env"}
+    EXCLUDED_PATHS = {"/health", "/api/health"}
 
     async def dispatch(self, request: Request, call_next):
         # Always allow preflight OPTIONS requests

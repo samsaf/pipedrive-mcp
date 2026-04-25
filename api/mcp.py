@@ -18,7 +18,7 @@ from starlette.middleware import Middleware
 from starlette.routing import Mount, Route
 
 from pipedrive.api.features import discover_features
-from pipedrive.app import debug_env, health_check, log_auth_status
+from pipedrive.app import health_check, log_auth_status
 from pipedrive.feature_config import FeatureConfig
 from pipedrive.mcp_instance import mcp
 from pipedrive.middleware.auth import BearerAuthMiddleware
@@ -73,8 +73,6 @@ class _JsonRpcApp:
 _starlette_app = Starlette(
     routes=[
         Route("/health", health_check, methods=["GET"]),
-        # TEMPORARY debug endpoint - remove after debugging
-        Route("/debug-env", debug_env, methods=["GET"]),
         Mount("/", app=_mcp_app),
     ],
     middleware=[
