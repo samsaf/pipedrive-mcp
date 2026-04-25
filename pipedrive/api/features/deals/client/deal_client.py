@@ -877,3 +877,65 @@ class DealClient:
         except Exception as e:
             logger.error(f"Error in delete_product_from_deal: {str(e)}")
             raise
+
+    async def list_pipelines(self) -> List[Dict[str, Any]]:
+        """
+        List all pipelines from Pipedrive.
+
+        Returns:
+            List of pipeline dictionaries with id, name, and other metadata.
+
+        Raises:
+            PipedriveAPIError: If the API request fails.
+        """
+        logger.info("DealClient: Listing all pipelines")
+
+        try:
+            response_data = await self.base_client.request("GET", "/pipelines")
+            pipelines = response_data.get("data", []) or []
+            logger.info(f"DealClient: Retrieved {len(pipelines)} pipelines")
+            return pipelines
+        except Exception as e:
+            logger.error(f"Error in list_pipelines: {str(e)}")
+            raise
+
+    async def list_stages(
+        self, pipeline_id: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        List all stages from Pipedrive, optionally filtered by pipeline.
+
+        Args:
+            pipeline_id: Optional pipeline ID to filter stages by.
+
+        Returns:
+            List of stage dictionaries with id, name, pipeline_id, order_nr, etc.
+
+        Raises:
+            PipedriveAPIError: If the API request fails.
+        """
+        logger.info(f"DealClient: Listing stages (pipeline_id={pipeline_id})")
+
+        try:
+            query_params: Dict[str, Any] = {}
+            if pipeline_id is not None:
+                if pipeline_id <= 0:
+                    raise ValueError(
+                        f"Invalid pipeline ID: {pipeline_id}. Must be a positive integer."
+                    )
+                query_params["pipeline_id"] = pipeline_id
+
+            response_data = await self.base_client.request(
+                "GET",
+                "/stages",
+                query_params=query_params if query_params else None,
+            )
+            stages = response_data.get("data", []) or []
+            logger.info(f"DealClient: Retrieved {len(stages)} stages")
+            return stages
+        except ValueError as e:
+            logger.error(f"Validation error in list_stages: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Error in list_stages: {str(e)}")
+            raise

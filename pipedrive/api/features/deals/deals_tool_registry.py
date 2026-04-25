@@ -7,6 +7,8 @@ from pipedrive.api.features.deals.tools.deal_search_tool import search_deals_in_
 from pipedrive.api.features.deals.tools.deal_list_tool import list_deals_from_pipedrive
 from pipedrive.api.features.deals.tools.deal_product_update_tool import update_product_in_deal_in_pipedrive
 from pipedrive.api.features.deals.tools.deal_product_delete_tool import delete_product_from_deal_in_pipedrive
+from pipedrive.api.features.deals.tools.pipeline_list_tool import list_pipelines_from_pipedrive
+from pipedrive.api.features.deals.tools.stage_list_tool import list_stages_from_pipedrive
 
 # Register the feature
 registry.register_feature(
@@ -29,3 +31,7 @@ registry.register_tool("deals", list_deals_from_pipedrive)
 # Register all deal product tools for this feature
 registry.register_tool("deals", update_product_in_deal_in_pipedrive)
 registry.register_tool("deals", delete_product_from_deal_in_pipedrive)
+
+# Register pipeline and stage listing tools
+registry.register_tool("deals", list_pipelines_from_pipedrive)
+registry.register_tool("deals", list_stages_from_pipedrive)
