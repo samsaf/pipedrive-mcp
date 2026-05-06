@@ -77,18 +77,25 @@ def validate_docstring(func: Callable, feature_id: str) -> List[str]:
     return warnings
 
 
-def tool(feature_id: str, validate: bool = True):
+def tool(
+    feature_id: str,
+    annotations: Optional[Dict[str, Any]] = None,
+    validate: bool = True,
+):
     """
     Enhanced decorator for MCP tools that registers them with the feature registry.
-    
+
     This decorator wraps the MCP tool decorator to also register tools with the
     feature registry for feature management. Tools will only be executed when their
     feature is enabled. It also validates docstrings against the standardized format.
-    
+
     Args:
         feature_id: The ID of the feature this tool belongs to
+        annotations: Optional MCP tool annotations forwarded to FastMCP
+            (readOnlyHint, destructiveHint, idempotentHint, openWorldHint).
+            Helps clients reason about tool safety. See `shared.utils` for presets.
         validate: Whether to validate the tool's docstring (defaults to True)
-        
+
     Returns:
         Decorator function for tool
     """
@@ -99,9 +106,12 @@ def tool(feature_id: str, validate: bool = True):
             if warnings:
                 for warning in warnings:
                     logger.warning(warning)
-        
-        # First register with MCP as before
-        mcp_decorated = mcp.tool()(func)
+
+        # First register with MCP as before, forwarding annotations if provided
+        if annotations is not None:
+            mcp_decorated = mcp.tool(annotations=annotations)(func)
+        else:
+            mcp_decorated = mcp.tool()(func)
         
         # Get the original function name for better logging
         original_name = func.__name__

@@ -4,13 +4,18 @@ from mcp.server.fastmcp import Context
 
 from log_config import logger
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import (
+    build_paginated_response,
+    empty_to_none,
+    format_tool_response,
+    TOOL_ANNOTATIONS_READ,
+)
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool("search_deals_in_pipedrive")
+@mcp.tool("search_deals_in_pipedrive", annotations=TOOL_ANNOTATIONS_READ)
 async def search_deals_in_pipedrive(
     ctx: Context,
     term: str,
@@ -98,12 +103,9 @@ async def search_deals_in_pipedrive(
         return format_tool_response(False, error_message=error_message)
 
     # Sanitize empty strings to None
-    fields_str = None if fields_str == "" else fields_str
-    person_id_str = None if person_id_str == "" else person_id_str
-    organization_id_str = None if organization_id_str == "" else organization_id_str
-    status = None if status == "" else status
-    include_fields_str = None if include_fields_str == "" else include_fields_str
-    cursor = None if cursor == "" else cursor
+    fields_str, person_id_str, organization_id_str, status, include_fields_str, cursor = empty_to_none(
+        fields_str, person_id_str, organization_id_str, status, include_fields_str, cursor
+    )
 
     pd_mcp_ctx: PipedriveMCPContext = ctx.request_context.lifespan_context
 
@@ -161,11 +163,8 @@ async def search_deals_in_pipedrive(
 
         logger.info(f"Successfully found {len(deals_list)} deals for term '{term}'")
 
-        # Format and return the response with next cursor information
-        response_data = {
-            "items": deals_list,
-            "next_cursor": next_cursor
-        }
+        # Format and return the response with pagination metadata
+        response_data = build_paginated_response(items=deals_list, next_cursor=next_cursor)
         return format_tool_response(True, data=response_data)
 
     except PipedriveAPIError as e:

@@ -6,13 +6,13 @@ from pydantic import ValidationError
 from log_config import logger
 from pipedrive.api.features.leads.models.lead import Lead
 from pipedrive.api.features.shared.conversion.id_conversion import validate_uuid_string
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import format_tool_response, TOOL_ANNOTATIONS_READ
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.api.features.tool_decorator import tool
 
 
-@tool("leads")
+@tool("leads", annotations=TOOL_ANNOTATIONS_READ)
 async def get_lead_from_pipedrive(
     ctx: Context,
     lead_id: str,

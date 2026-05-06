@@ -4,13 +4,17 @@ from mcp.server.fastmcp import Context
 
 from log_config import logger
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import (
+    empty_to_none,
+    format_tool_response,
+    TOOL_ANNOTATIONS_READ,
+)
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool("list_stages_from_pipedrive")
+@mcp.tool("list_stages_from_pipedrive", annotations=TOOL_ANNOTATIONS_READ)
 async def list_stages_from_pipedrive(
     ctx: Context,
     pipeline_id_str: Optional[str] = None,
@@ -48,7 +52,7 @@ async def list_stages_from_pipedrive(
     )
 
     # Sanitize empty string to None
-    pipeline_id_str = None if pipeline_id_str == "" else pipeline_id_str
+    (pipeline_id_str,) = empty_to_none(pipeline_id_str)
 
     pd_mcp_ctx: PipedriveMCPContext = ctx.request_context.lifespan_context
 

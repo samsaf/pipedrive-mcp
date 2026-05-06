@@ -4,13 +4,18 @@ from mcp.server.fastmcp import Context
 
 from log_config import logger
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response, safe_split_to_list
+from pipedrive.api.features.shared.utils import (
+    build_paginated_response,
+    format_tool_response,
+    safe_split_to_list,
+    TOOL_ANNOTATIONS_READ,
+)
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool()
+@mcp.tool(annotations=TOOL_ANNOTATIONS_READ)
 async def list_organizations_from_pipedrive(
     ctx: Context,
     limit_str: Optional[str] = "100",
@@ -99,13 +104,9 @@ async def list_organizations_from_pipedrive(
 
         logger.info(f"Successfully listed {len(organizations)} organizations")
         
-        # Format the response with pagination information
-        response_data = {
-            "items": organizations,
-            "next_cursor": next_cursor,
-            "count": len(organizations)
-        }
-        
+        # Format the response with pagination metadata
+        response_data = build_paginated_response(items=organizations, next_cursor=next_cursor)
+
         return format_tool_response(True, data=response_data)
 
     except PipedriveAPIError as e:

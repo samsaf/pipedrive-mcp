@@ -4,13 +4,13 @@ from mcp.server.fastmcp import Context
 
 from log_config import logger
 from pipedrive.api.features.leads.models.lead_label import LeadLabel
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import format_tool_response, TOOL_ANNOTATIONS_READ
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.api.features.tool_decorator import tool
 
 
-@tool("leads")
+@tool("leads", annotations=TOOL_ANNOTATIONS_READ)
 async def get_lead_labels_from_pipedrive(ctx: Context) -> str:
     """Retrieves all available lead labels from Pipedrive.
     

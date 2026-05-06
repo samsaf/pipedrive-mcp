@@ -6,13 +6,13 @@ from pydantic import ValidationError
 from log_config import logger
 from pipedrive.api.features.organizations.models.organization_follower import OrganizationFollower
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import format_tool_response, TOOL_ANNOTATIONS_CREATE
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool()
+@mcp.tool(annotations=TOOL_ANNOTATIONS_CREATE)
 async def add_follower_to_organization_in_pipedrive(
     ctx: Context,
     organization_id_str: str,

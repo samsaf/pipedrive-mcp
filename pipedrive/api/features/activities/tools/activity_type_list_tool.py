@@ -1,13 +1,13 @@
 from mcp.server.fastmcp import Context
 
 from log_config import logger
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import format_tool_response, TOOL_ANNOTATIONS_READ
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.api.features.tool_decorator import tool
 
 
-@tool("activities")
+@tool("activities", annotations=TOOL_ANNOTATIONS_READ)
 async def get_activity_types_from_pipedrive(
     ctx: Context,
 ) -> str:

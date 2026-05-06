@@ -17,14 +17,15 @@ from pipedrive.api.features.shared.conversion.id_conversion import (
 )
 from pipedrive.api.features.shared.utils import (
     format_tool_response,
-    sanitize_inputs
+    sanitize_inputs,
+    TOOL_ANNOTATIONS_UPDATE,
 )
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.api.features.tool_decorator import tool
 
 
-@tool("activities")
+@tool("activities", annotations=TOOL_ANNOTATIONS_UPDATE)
 async def update_activity_in_pipedrive(
     ctx: Context,
     id: str,

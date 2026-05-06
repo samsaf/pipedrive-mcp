@@ -4,13 +4,17 @@ from mcp.server.fastmcp import Context
 
 from log_config import logger
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import (
+    empty_to_none,
+    format_tool_response,
+    TOOL_ANNOTATIONS_READ,
+)
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool("get_deal_from_pipedrive")
+@mcp.tool("get_deal_from_pipedrive", annotations=TOOL_ANNOTATIONS_READ)
 async def get_deal_from_pipedrive(
     ctx: Context,
     id_str: str,
@@ -67,8 +71,7 @@ async def get_deal_from_pipedrive(
     )
 
     # Sanitize empty strings to None
-    include_fields_str = None if include_fields_str == "" else include_fields_str
-    custom_fields_str = None if custom_fields_str == "" else custom_fields_str
+    include_fields_str, custom_fields_str = empty_to_none(include_fields_str, custom_fields_str)
 
     pd_mcp_ctx: PipedriveMCPContext = ctx.request_context.lifespan_context
 

@@ -3,14 +3,18 @@ from typing import Optional, List
 from mcp.server.fastmcp import Context
 
 from log_config import logger
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import (
+    build_paginated_response,
+    format_tool_response,
+    TOOL_ANNOTATIONS_READ,
+)
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.api.features.tool_decorator import tool
 
 
-@tool("persons")
+@tool("persons", annotations=TOOL_ANNOTATIONS_READ)
 async def search_persons_in_pipedrive(
     ctx: Context,
     term: str,
@@ -149,14 +153,10 @@ async def search_persons_in_pipedrive(
         
         logger.info(f"Found {len(search_results)} persons matching term '{term}'")
         
-        # Return the search results
+        # Return the search results with pagination metadata
         return format_tool_response(
-            True, 
-            data={
-                "items": search_results,
-                "count": len(search_results),
-                "next_cursor": next_cursor
-            }
+            True,
+            data=build_paginated_response(items=search_results, next_cursor=next_cursor),
         )
         
     except PipedriveAPIError as e:

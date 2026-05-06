@@ -4,13 +4,19 @@ from mcp.server.fastmcp import Context
 
 from log_config import logger
 from pipedrive.api.features.item_search.models.search_result import FieldSearchResults
-from pipedrive.api.features.shared.utils import format_tool_response, safe_split_to_list, sanitize_inputs
+from pipedrive.api.features.shared.utils import (
+    build_paginated_response,
+    format_tool_response,
+    safe_split_to_list,
+    sanitize_inputs,
+    TOOL_ANNOTATIONS_READ,
+)
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.api.features.tool_decorator import tool
 
 
-@tool("item_search")
+@tool("item_search", annotations=TOOL_ANNOTATIONS_READ)
 async def search_item_field_in_pipedrive(
     ctx: Context,
     term: str,
@@ -227,14 +233,10 @@ async def search_item_field_in_pipedrive(
             logger.warning(
                 f"Error processing field search results through model: {str(model_error)}. Falling back to simple format."
             )
-            # Return a simplified response
+            # Return a simplified response with standard pagination metadata
             return format_tool_response(
-                True, 
-                data={
-                    "items": field_results,
-                    "count": len(field_results),
-                    "next_cursor": next_cursor
-                }
+                True,
+                data=build_paginated_response(items=field_results, next_cursor=next_cursor),
             )
         
     except PipedriveAPIError as e:

@@ -4,13 +4,13 @@ from mcp.server.fastmcp import Context
 
 from log_config import logger
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response, safe_split_to_list
+from pipedrive.api.features.shared.utils import format_tool_response, safe_split_to_list, TOOL_ANNOTATIONS_READ
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool()
+@mcp.tool(annotations=TOOL_ANNOTATIONS_READ)
 async def get_organization_from_pipedrive(
     ctx: Context,
     id_str: str,

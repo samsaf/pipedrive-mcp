@@ -2,13 +2,13 @@ from mcp.server.fastmcp import Context
 
 from log_config import logger
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import format_tool_response, TOOL_ANNOTATIONS_DELETE
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool("delete_product_from_deal_in_pipedrive")
+@mcp.tool("delete_product_from_deal_in_pipedrive", annotations=TOOL_ANNOTATIONS_DELETE)
 async def delete_product_from_deal_in_pipedrive(
     ctx: Context,
     id_str: str,

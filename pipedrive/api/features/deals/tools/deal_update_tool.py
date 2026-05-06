@@ -6,13 +6,18 @@ from pydantic import ValidationError
 from log_config import logger
 from pipedrive.api.features.deals.models.deal import Deal, VISIBILITY_PRIVATE, VISIBILITY_SHARED, VISIBILITY_TEAM, VISIBILITY_ENTIRE_COMPANY
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string, validate_date_string
-from pipedrive.api.features.shared.utils import format_tool_response, format_validation_error
+from pipedrive.api.features.shared.utils import (
+    empty_to_none,
+    format_tool_response,
+    format_validation_error,
+    TOOL_ANNOTATIONS_UPDATE,
+)
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool("update_deal_in_pipedrive")
+@mcp.tool("update_deal_in_pipedrive", annotations=TOOL_ANNOTATIONS_UPDATE)
 async def update_deal_in_pipedrive(
     ctx: Context,
     id_str: str,
@@ -91,19 +96,35 @@ async def update_deal_in_pipedrive(
     )
 
     # Sanitize empty strings to None
-    title = None if title == "" else title
-    value = None if value == "" else value
-    currency = None if currency == "" else currency
-    person_id_str = None if person_id_str == "" else person_id_str
-    org_id_str = None if org_id_str == "" else org_id_str
-    status = None if status == "" else status
-    owner_id_str = None if owner_id_str == "" else owner_id_str
-    stage_id_str = None if stage_id_str == "" else stage_id_str
-    pipeline_id_str = None if pipeline_id_str == "" else pipeline_id_str
-    expected_close_date = None if expected_close_date == "" else expected_close_date
-    visible_to_str = None if visible_to_str == "" else visible_to_str
-    probability = None if probability == "" else probability
-    lost_reason = None if lost_reason == "" else lost_reason
+    (
+        title,
+        value,
+        currency,
+        person_id_str,
+        org_id_str,
+        status,
+        owner_id_str,
+        stage_id_str,
+        pipeline_id_str,
+        expected_close_date,
+        visible_to_str,
+        probability,
+        lost_reason,
+    ) = empty_to_none(
+        title,
+        value,
+        currency,
+        person_id_str,
+        org_id_str,
+        status,
+        owner_id_str,
+        stage_id_str,
+        pipeline_id_str,
+        expected_close_date,
+        visible_to_str,
+        probability,
+        lost_reason,
+    )
 
     pd_mcp_ctx: PipedriveMCPContext = ctx.request_context.lifespan_context
 

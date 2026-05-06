@@ -6,13 +6,18 @@ from pydantic import ValidationError
 from log_config import logger
 from pipedrive.api.features.organizations.models.organization import Organization
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response, safe_split_to_list
+from pipedrive.api.features.shared.utils import (
+    empty_to_none,
+    format_tool_response,
+    safe_split_to_list,
+    TOOL_ANNOTATIONS_CREATE,
+)
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool()
+@mcp.tool(annotations=TOOL_ANNOTATIONS_CREATE)
 async def create_organization_in_pipedrive(
     ctx: Context,
     name: str,
@@ -74,10 +79,9 @@ async def create_organization_in_pipedrive(
     )
 
     # Sanitize empty strings to None
-    owner_id_str = None if owner_id_str == "" else owner_id_str
-    address = None if address == "" else address
-    visible_to_str = None if visible_to_str == "" else visible_to_str
-    industry = None if industry == "" else industry
+    owner_id_str, address, visible_to_str, industry = empty_to_none(
+        owner_id_str, address, visible_to_str, industry
+    )
 
     pd_mcp_ctx: PipedriveMCPContext = ctx.request_context.lifespan_context
 

@@ -19,14 +19,15 @@ from pipedrive.api.features.shared.utils import (
     format_tool_response,
     format_validation_error,
     sanitize_inputs,
-    bool_to_lowercase_str
+    bool_to_lowercase_str,
+    TOOL_ANNOTATIONS_CREATE,
 )
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.api.features.tool_decorator import tool
 
 
-@tool("activities")
+@tool("activities", annotations=TOOL_ANNOTATIONS_CREATE)
 async def create_activity_in_pipedrive(
     ctx: Context,
     subject: str,

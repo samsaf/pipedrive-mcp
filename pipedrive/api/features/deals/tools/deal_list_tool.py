@@ -4,13 +4,18 @@ from mcp.server.fastmcp import Context
 
 from log_config import logger
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import (
+    build_paginated_response,
+    empty_to_none,
+    format_tool_response,
+    TOOL_ANNOTATIONS_READ,
+)
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool("list_deals_from_pipedrive")
+@mcp.tool("list_deals_from_pipedrive", annotations=TOOL_ANNOTATIONS_READ)
 async def list_deals_from_pipedrive(
     ctx: Context,
     limit_str: Optional[str] = "100",
@@ -96,20 +101,37 @@ async def list_deals_from_pipedrive(
     )
 
     # Sanitize empty strings to None
-    cursor = None if cursor == "" else cursor
-    filter_id_str = None if filter_id_str == "" else filter_id_str
-    owner_id_str = None if owner_id_str == "" else owner_id_str
-    person_id_str = None if person_id_str == "" else person_id_str
-    org_id_str = None if org_id_str == "" else org_id_str
-    pipeline_id_str = None if pipeline_id_str == "" else pipeline_id_str
-    stage_id_str = None if stage_id_str == "" else stage_id_str
-    status = None if status == "" else status
-    sort_by = None if sort_by == "" else sort_by
-    sort_direction = None if sort_direction == "" else sort_direction
-    include_fields_str = None if include_fields_str == "" else include_fields_str
-    custom_fields_str = None if custom_fields_str == "" else custom_fields_str
-    updated_since = None if updated_since == "" else updated_since
-    updated_until = None if updated_until == "" else updated_until
+    (
+        cursor,
+        filter_id_str,
+        owner_id_str,
+        person_id_str,
+        org_id_str,
+        pipeline_id_str,
+        stage_id_str,
+        status,
+        sort_by,
+        sort_direction,
+        include_fields_str,
+        custom_fields_str,
+        updated_since,
+        updated_until,
+    ) = empty_to_none(
+        cursor,
+        filter_id_str,
+        owner_id_str,
+        person_id_str,
+        org_id_str,
+        pipeline_id_str,
+        stage_id_str,
+        status,
+        sort_by,
+        sort_direction,
+        include_fields_str,
+        custom_fields_str,
+        updated_since,
+        updated_until,
+    )
 
     pd_mcp_ctx: PipedriveMCPContext = ctx.request_context.lifespan_context
 
@@ -187,11 +209,8 @@ async def list_deals_from_pipedrive(
 
         logger.info(f"Successfully retrieved {len(deals_list)} deals")
 
-        # Format and return the response with next cursor information
-        response_data = {
-            "items": deals_list,
-            "next_cursor": next_cursor
-        }
+        # Format and return the response with pagination metadata
+        response_data = build_paginated_response(items=deals_list, next_cursor=next_cursor)
         return format_tool_response(True, data=response_data)
 
     except PipedriveAPIError as e:

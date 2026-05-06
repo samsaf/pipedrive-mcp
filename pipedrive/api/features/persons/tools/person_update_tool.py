@@ -4,7 +4,7 @@ from mcp.server.fastmcp import Context
 from pydantic import ValidationError
 
 from log_config import logger
-from pipedrive.api.features.shared.utils import format_tool_response
+from pipedrive.api.features.shared.utils import format_tool_response, TOOL_ANNOTATIONS_UPDATE
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
 from pipedrive.api.features.persons.models.person import Person
 from pipedrive.api.features.persons.models.contact_info import Email, Phone
@@ -13,7 +13,7 @@ from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.api.features.tool_decorator import tool
 
 
-@tool("persons")
+@tool("persons", annotations=TOOL_ANNOTATIONS_UPDATE)
 async def update_person_in_pipedrive(
     ctx: Context,
     id_str: str,

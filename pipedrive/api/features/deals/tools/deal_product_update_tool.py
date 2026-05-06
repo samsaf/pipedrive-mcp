@@ -6,13 +6,18 @@ from pydantic import ValidationError
 
 from log_config import logger
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string, validate_date_string
-from pipedrive.api.features.shared.utils import format_tool_response, format_validation_error
+from pipedrive.api.features.shared.utils import (
+    empty_to_none,
+    format_tool_response,
+    format_validation_error,
+    TOOL_ANNOTATIONS_UPDATE,
+)
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.mcp_instance import mcp
 
 
-@mcp.tool("update_product_in_deal_in_pipedrive")
+@mcp.tool("update_product_in_deal_in_pipedrive", annotations=TOOL_ANNOTATIONS_UPDATE)
 async def update_product_in_deal_in_pipedrive(
     ctx: Context,
     id_str: str,
@@ -96,17 +101,31 @@ async def update_product_in_deal_in_pipedrive(
     )
 
     # Sanitize empty strings to None
-    item_price = None if item_price == "" else item_price
-    quantity = None if quantity == "" else quantity
-    tax = None if tax == "" else tax
-    comments = None if comments == "" else comments
-    discount = None if discount == "" else discount
-    discount_type = None if discount_type == "" else discount_type
-    tax_method = None if tax_method == "" else tax_method
-    product_variation_id_str = None if product_variation_id_str == "" else product_variation_id_str
-    billing_frequency = None if billing_frequency == "" else billing_frequency
-    billing_frequency_cycles = None if billing_frequency_cycles == "" else billing_frequency_cycles
-    billing_start_date = None if billing_start_date == "" else billing_start_date
+    (
+        item_price,
+        quantity,
+        tax,
+        comments,
+        discount,
+        discount_type,
+        tax_method,
+        product_variation_id_str,
+        billing_frequency,
+        billing_frequency_cycles,
+        billing_start_date,
+    ) = empty_to_none(
+        item_price,
+        quantity,
+        tax,
+        comments,
+        discount,
+        discount_type,
+        tax_method,
+        product_variation_id_str,
+        billing_frequency,
+        billing_frequency_cycles,
+        billing_start_date,
+    )
 
     pd_mcp_ctx: PipedriveMCPContext = ctx.request_context.lifespan_context
 

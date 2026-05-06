@@ -6,13 +6,13 @@ from pydantic import ValidationError
 from log_config import logger
 from pipedrive.api.features.activities.models.activity_type import ActivityType
 from pipedrive.api.features.shared.conversion.id_conversion import convert_id_string
-from pipedrive.api.features.shared.utils import format_tool_response, sanitize_inputs
+from pipedrive.api.features.shared.utils import format_tool_response, sanitize_inputs, TOOL_ANNOTATIONS_CREATE
 from pipedrive.api.pipedrive_api_error import PipedriveAPIError
 from pipedrive.api.pipedrive_context import PipedriveMCPContext
 from pipedrive.api.features.tool_decorator import tool
 
 
-@tool("activities")
+@tool("activities", annotations=TOOL_ANNOTATIONS_CREATE)
 async def create_activity_type_in_pipedrive(
     ctx: Context,
     name: str,
