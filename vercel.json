@@ -5,6 +5,12 @@
       "use": "@vercel/python"
     }
   ],
+  "functions": {
+    "api/mcp.py": {
+      "maxDuration": 30,
+      "memory": 512
+    }
+  },
   "routes": [
     {
       "src": "/health",
