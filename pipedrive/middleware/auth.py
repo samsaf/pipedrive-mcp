@@ -5,7 +5,7 @@ import logging
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +26,24 @@ class BearerAuthMiddleware(BaseHTTPMiddleware):
     # Prefixes always allowed without auth so OAuth-discovery clients (e.g. claude.ai
     # Custom Connector) get a clean 404 from the underlying app instead of a misleading 401.
     EXCLUDED_PREFIXES = ("/.well-known/", "/register")
+    # Paths on which only POST is allowed. GET would open a long-lived SSE stream
+    # that hangs until maxDuration on serverless (Vercel), burning function time.
+    POST_ONLY_PATHS = {"/mcp", "/mcp/"}
 
     async def dispatch(self, request: Request, call_next):
         # Always allow preflight OPTIONS requests
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # Skip auth for health check and OAuth discovery endpoints
         path = request.url.path
+
+        # Reject GET on /mcp early — in stateless mode we never push notifications,
+        # so the GET-based listen stream would just idle until timeout. Returning 405
+        # tells the client (mcp-remote, claude.ai) "no SSE listener here" per the MCP spec.
+        if request.method == "GET" and path in self.POST_ONLY_PATHS:
+            return Response(status_code=405, headers={"Allow": "POST, OPTIONS"})
+
+        # Skip auth for health check and OAuth discovery endpoints
         if path in self.EXCLUDED_PATHS or path.startswith(self.EXCLUDED_PREFIXES):
             return await call_next(request)
 

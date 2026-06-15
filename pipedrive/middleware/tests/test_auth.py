@@ -25,6 +25,7 @@ def _create_app() -> Starlette:
         routes=[
             Route("/test", _ok_endpoint, methods=["GET", "POST"]),
             Route("/health", _health_endpoint, methods=["GET"]),
+            Route("/mcp", _ok_endpoint, methods=["GET", "POST"]),
         ],
         middleware=[Middleware(BearerAuthMiddleware)],
     )
@@ -97,3 +98,28 @@ class TestBearerAuthMiddleware:
         client = TestClient(app)
         response = client.options("/test")
         assert response.status_code != 401
+
+    @patch.dict("os.environ", {"MCP_AUTH_TOKEN": "secret-token-123"})
+    def test_get_on_mcp_returns_405(self):
+        """GET on /mcp must short-circuit to 405 — no SSE stream in stateless mode."""
+        app = _create_app()
+        client = TestClient(app)
+        response = client.get("/mcp", headers={"Authorization": "Bearer secret-token-123"})
+        assert response.status_code == 405
+        assert response.headers.get("Allow") == "POST, OPTIONS"
+
+    @patch.dict("os.environ", {"MCP_AUTH_TOKEN": "secret-token-123"})
+    def test_get_on_mcp_returns_405_even_without_auth(self):
+        """The 405 short-circuit fires before auth check, so even unauthenticated GETs return 405."""
+        app = _create_app()
+        client = TestClient(app)
+        response = client.get("/mcp")
+        assert response.status_code == 405
+
+    @patch.dict("os.environ", {"MCP_AUTH_TOKEN": "secret-token-123"})
+    def test_post_on_mcp_still_requires_auth(self):
+        """POST on /mcp should NOT be blocked — it's the legitimate MCP transport."""
+        app = _create_app()
+        client = TestClient(app)
+        response = client.post("/mcp", headers={"Authorization": "Bearer secret-token-123"})
+        assert response.status_code == 200
